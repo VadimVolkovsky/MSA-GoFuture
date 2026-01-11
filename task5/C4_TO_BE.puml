@@ -1,0 +1,52 @@
+@startuml Container_Diagram_ToBe_Monitoring_ML
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(data_analyst, "Data Analyst")
+Person(data_scientist, "Data Scientist")
+
+System_Boundary(go_future, "GoFuture Platform (To-Be)") {
+
+    ' ===== Domain Services =====
+    Container(booking, "Booking Service", "Python / Java", "Создание и управление поездкой")
+    Container(driver_svc, "Driver Service", "Python / Go", "Водители и доступность")
+    Container(pricing, "Pricing Service", "Python + ML", "Динамическое ценообразование")
+    Container(payments, "Payments Service", "Java", "Платежи и выплаты")
+    Container(fraud, "Fraud Service", "Python", "Антифрод")
+
+    ' ===== Event Bus =====
+    ContainerQueue(event_bus, "Event Bus", "Kafka", "Асинхронная передача событий и логов")
+
+    ' ===== Analytics =====
+    Container(analytics_ingest, "Analytics Ingest Service", "Flink", "Обработка событий в реальном времени")
+    ContainerDb(db_analytics, "Analytics DB", "ClickHouse", "Хранилище для аналитики и ML")
+    Container(ml_platform, "ML Platform", "Python", "Обучение и прогнозирование моделей")
+    Container(bi_tool, "BI Tool", "DataLens / Looker", "Бизнес и финансовая аналитика")
+
+    ' ===== Observability =====
+    Container(prometheus, "Prometheus", "Monitoring System", "Сбор метрик")
+    Container(grafana, "Grafana", "Dashboard System", "Визуализация метрик")
+    Container(loki, "Loki", "Log Aggregation", "Сбор и анализ логов")
+}
+
+' ===== Data Flow =====
+Rel(booking, event_bus, "Отправляет события")
+Rel(driver_svc, event_bus, "Отправляет события")
+Rel(pricing, event_bus, "Отправляет события")
+Rel(payments, event_bus, "Отправляет события")
+Rel(fraud, event_bus, "Отправляет события")
+
+Rel(event_bus, analytics_ingest, "События и данные")
+Rel(analytics_ingest, db_analytics, "Запись в хранилище аналитики")
+Rel(db_analytics, ml_platform, "Данные для обучения моделей")
+Rel(db_analytics, bi_tool, "Данные для отчетности")
+
+' ===== Observability =====
+Rel(analytics_ingest, prometheus, "Метрики обработки данных")
+Rel(prometheus, grafana, "Визуализация")
+Rel(analytics_ingest, loki, "Логи потоков данных")
+
+' ===== Users =====
+Rel(data_analyst, bi_tool, "Анализирует данные")
+Rel(data_scientist, ml_platform, "Использует данные для обучения моделей")
+
+@enduml
